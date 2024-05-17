@@ -1,0 +1,2 @@
+// delete sessionId
+REMOVE @sessionId IN sessionIds

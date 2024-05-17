@@ -1,0 +1,15 @@
+@App:name('sessionIdsEventHandler')
+@App:description('Basic Stream application to demonstrate reading data from input Key-Value collection, get a field and forward it into a stream.')
+@App:qlVersion('2')
+
+-- Defines our existing sessionIds KV store.
+CREATE SOURCE SessionIds WITH (type = 'database', collection = 'sessionIds', collection.type='kv', replication.type='global', map.type='json', kv.expiration='false') (value string);
+
+-- Our output stream just forwarding putting our IP in it.
+CREATE SINK STREAM IpAddressOutputStream (value string);
+
+-- Data Processing
+@info(name='Query')
+INSERT INTO IpAddressOutputStream
+SELECT json:getString(value,'$.input.ip') AS value
+FROM SessionIds;

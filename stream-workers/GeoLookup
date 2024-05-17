@@ -1,0 +1,33 @@
+@App:name("GeoLookup")
+@App:qlVersion("2")
+
+-- This is our existing stream.
+CREATE STREAM IpAddressOutputStream (value STRING);
+
+-- Define a sink to publish the data to the external application.
+CREATE SINK GetGeoInfo WITH (type='http-call', publisher.url='https://api.grinwis.com/city/', method='POST', headers="'Content-Type:application/json'", sink.id="getGeoInfo", map.type='json', map.payload="""{"ip":"{{IP}}"}""") (IP STRING);
+
+-- Define a source to receive the output from the external application.
+CREATE SOURCE GeoInfo WITH (source.type='http-call-response', sink.id='getGeoInfo', map.type='json') (ip STRING, city STRING);
+
+-- Create a sink, our output stream
+CREATE SINK STREAM IpAddressGeoStream (cache string, ip string, city STRING, currentDate STRING);
+
+-- if we have a cache hit, don't start GEO track
+@info(name = 'cache-hit-track')
+INSERT INTO IpAddressGeoStream
+SELECT "hit" as cache, value as ip, cache:get(value) as city, time:currentDate() AS currentDate 
+FROM IpAddressOutputStream
+WHERE NOT city IS NULL;
+
+-- a cache miss, start GEO lookup track
+@info(name = 'cache-miss-track')
+INSERT INTO GetGeoInfo
+SELECT value as IP 
+FROM IpAddressOutputStream
+WHERE cache:get(IP) IS NULL;
+
+-- get IP and city and put in cache
+INSERT INTO IpAddressGeoStream
+SELECT "miss" as cache, ip, cache:put(ip, city) as city, time:currentDate() AS currentDate
+FROM GeoInfo

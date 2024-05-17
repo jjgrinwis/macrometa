@@ -1,0 +1,23 @@
+// first check if our input is an object, if not just create an empty object
+LET input = IS_OBJECT(@input) ? @input : {}
+
+// create a UUID used as key in our key-value store
+LET key = UUID()
+
+// how long do we want to keep this key
+LET interval = 1
+
+// create our new object we're going to insert
+LET value = {
+    date: DATE_NOW(),
+    input: input
+}
+
+// now insert this data into our kv collection and return inserted results
+INSERT {
+    "_key": key,
+    "expireAt": ROUND(DATE_TIMESTAMP(DATE_ADD(DATE_NOW(), interval, "day"))/1000),
+    "value": value
+} INTO sessionIds
+LET inserted = NEW
+RETURN inserted
