@@ -1,2 +1,3 @@
+// getSessionId
 // lets return value assigned to this sessionId key
 RETURN DOCUMENT("sessionIds", @sessionId)

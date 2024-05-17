@@ -1,3 +1,4 @@
+// createSessionId
 // first check if our input is an object, if not just create an empty object
 LET input = IS_OBJECT(@input) ? @input : {}
 
